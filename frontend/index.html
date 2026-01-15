@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>LITE – Movie Recommendation System</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header>
+  <h1>🎬 LITE</h1>
+  <p>Accessible Intelligent Movie Recommendation System</p>
+</header>
+
+<div class="controls">
+  <input type="text" id="genreInput" placeholder="Search by genre (e.g. Sci-Fi)" />
+  <button onclick="getRecommendations()">Watch</button>
+
+  <button class="blind-toggle" onclick="toggleBlindMode()">Blind Mode</button>
+</div>
+
+<section id="movies" class="movie-grid"></section>
+
+<footer>
+  <p>Powered by AI • Gemini Intelligence</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
