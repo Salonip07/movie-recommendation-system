@@ -1,27 +1,20 @@
-import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-movies = pd.read_csv("data/movies_metadata.csv")
+def recommend_movies(title, df, user):
+    tfidf = TfidfVectorizer(stop_words='english')
+    tfidf_matrix = tfidf.fit_transform(df["combined"])
 
-def recommend_movies(user_profile, preferred_genre=None, time_of_day=None):
-    movies["score"] = movies["imdb_rating"]
+    idx = df[df["title"] == title].index[0]
+    sim = cosine_similarity(tfidf_matrix[idx], tfidf_matrix).flatten()
 
-    # Genre watch-time boost
-    for genre, hours in user_profile.genre_hours.items():
-        movies.loc[movies["genres"].str.contains(genre, na=False),
-                   "score"] += hours * 0.5
+    df["score"] = sim
 
-    # Wishlist boost
-    movies.loc[movies["id"].isin(user_profile.wishlist), "score"] += 3
+    # Boost wishlist
+    df.loc[df["title"].isin(user.wishlist), "score"] *= 1.3
 
-    # Heavy rotation boost
-    for mid, count in user_profile.watch_count.items():
-        if count >= 3:
-            movies.loc[movies["id"] == mid, "score"] += 2
+    # Boost favorite genres
+    for g in user.favorite_genres():
+        df.loc[df["genres"].str.contains(g), "score"] *= 1.2
 
-    # Preferred genre discovery
-    if preferred_genre:
-        movies.loc[movies["genres"].str.contains(preferred_genre, na=False),
-                   "score"] += 1
-
-    return movies.sort_values("score", ascending=False).head(20).to_dict("records")
+    return df.sort_values("score", ascending=False).head(10).to_dict("records")
