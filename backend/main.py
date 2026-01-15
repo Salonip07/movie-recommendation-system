@@ -1,49 +1,28 @@
 from flask import Flask, request, jsonify
 from recommender import recommend_movies
 from user_profile import UserProfile
-from gemini_ai import ask_gemini
+from data_loader import load_movies
 
 app = Flask(__name__)
+movies_df = load_movies()
 user = UserProfile()
 
 @app.route("/recommend", methods=["POST"])
 def recommend():
     data = request.json
-    results = recommend_movies(
-        user_profile=user,
-        preferred_genre=data.get("preferred_genre"),
-        time_of_day=data.get("time_of_day")
-    )
+    movie_title = data["movie"]
+    results = recommend_movies(movie_title, movies_df, user)
     return jsonify(results)
 
 @app.route("/watch", methods=["POST"])
 def watch_movie():
-    movie_id = request.json["movie_id"]
-    watch_time = request.json["watch_time"]
-    user.watch_movie(movie_id, watch_time)
-    return jsonify({"status": "Movie added to watch history"})
+    data = request.json
+    user.add_watch(data["movie"], data["hours"], data["time_pref"])
+    return jsonify({"status": "updated"})
 
-@app.route("/rate", methods=["POST"])
-def rate_movie():
-    user.rate_movie(
-        request.json["movie_id"],
-        request.json["rating"]
-    )
-    return jsonify({"status": "Rating updated & recommendations refreshed"})
-
-@app.route("/wishlist", methods=["POST"])
-def wishlist():
-    user.add_to_wishlist(request.json["movie_id"])
-    return jsonify({"status": "Added to wishlist"})
-
-@app.route("/bucket", methods=["GET"])
-def bucket():
-    return jsonify(user.get_bucket())
-
-@app.route("/chat", methods=["POST"])
-def chat():
-    response = ask_gemini(request.json["message"])
-    return jsonify({"reply": response})
+@app.route("/profile")
+def profile():
+    return jsonify(user.export())
 
 if __name__ == "__main__":
     app.run(debug=True)
